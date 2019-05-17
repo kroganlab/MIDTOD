@@ -1,0 +1,81 @@
+Terpenoid backbone biosynthesis
+Monoterpenoid biosynthesis
+Sesquiterpenoid and triterpenoid biosynthesis
+Diterpenoid biosynthesis
+Carotenoid biosynthesis
+Brassinosteroid biosynthesis
+Insect hormone biosynthesis
+Zeatin biosynthesis
+Limonene and pinene degradation
+Geraniol degradation
+Type I polyketide structures
+Biosynthesis of 12-, 14- and 16-membered macrolides
+Biosynthesis of ansamycins
+Biosynthesis of type II polyketide backbone
+Biosynthesis of type II polyketide products
+Tetracycline biosynthesis
+Polyketide sugar unit biosynthesis
+Nonribosomal peptide structures
+Biosynthesis of siderophore group nonribosomal peptides
+Biosynthesis of vancomycin group antibiotics	Prenyltransferases
+Polyketide biosynthesis proteins
+Phenylpropanoid biosynthesis
+Stilbenoid, diarylheptanoid and gingerol biosynthesis
+Flavonoid biosynthesis
+Flavone and flavonol biosynthesis
+Anthocyanin biosynthesis
+Isoflavonoid biosynthesis
+Indole alkaloid biosynthesis
+Indole diterpene alkaloid biosynthesis
+Isoquinoline alkaloid biosynthesis
+Tropane, piperidine and pyridine alkaloid biosynthesis
+Acridone alkaloid biosynthesis
+Caffeine metabolism
+Betalain biosynthesis
+Glucosinolate biosynthesis
+Benzoxazinoid biosynthesis
+Penicillin and cephalosporin biosynthesis
+Carbapenem biosynthesis
+Monobactam biosynthesis
+Clavulanic acid biosynthesis
+Streptomycin biosynthesis
+Neomycin, kanamycin and gentamicin biosynthesis
+Acarbose and validamycin biosynthesis
+Puromycin biosynthesis
+Novobiocin biosynthesis
+Staurosporine biosynthesis
+Aflatoxin biosynthesis	Phytochemical compounds
+Benzoate degradation
+Aminobenzoate degradation
+Fluorobenzoate degradation
+Chloroalkane and chloroalkene degradation
+Chlorocyclohexane and chlorobenzene degradation
+Toluene degradation
+Xylene degradation
+Nitrotoluene degradation
+Ethylbenzene degradation
+Styrene degradation
+Atrazine degradation
+Caprolactam degradation
+DDT degradation
+Bisphenol degradation
+Dioxin degradation
+Naphthalene degradation
+Polycyclic aromatic hydrocarbon degradation
+Furfural degradation
+Steroid degradation
+Metabolism of xenobiotics by cytochrome P450
+Drug metabolism - cytochrome P450
+Drug metabolism - other enzymes	Endocrine disrupting compounds
+Pesticides
+Cytochrome P450
+Overview of biosynthetic pathways
+Biosynthesis of plant secondary metabolites
+Biosynthesis of phenylpropanoids
+Biosynthesis of terpenoids and steroids
+Biosynthesis of alkaloids derived from shikimate pathway
+Biosynthesis of alkaloids derived from ornithine, lysine and nicotinic acid
+Biosynthesis of alkaloids derived from histidine and purine
+Biosynthesis of alkaloids derived from terpenoid and polyketide
+Biosynthesis of plant hormones
+Methane metabolism

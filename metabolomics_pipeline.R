@@ -1,53 +1,44 @@
 #! /usr/bin/env Rscript
-#
-# ------------------
-script <- 'metabolomics_pipeline.R'
-# ------------------
+library(package = "optparse")
 
-# Description
-# Generate a config.yaml file required by RMSQv3
+optionList <- list(make_option(opt_str = c("-f", "--file"),
+			       type    = "character",
+			       default = NULL,
+			       help    = "result file in wide format",
+			       metavar = "character"),
+		   make_option(opt_str = c("-e", "--evidence"),
+			       type    = "character",
+			       default = NULL,
+			       help    = "evidence file",
+			       metavar = "character"),
+		   make_option(opt_str = c("-o", "--output-dir"),
+			       type    = "character",
+			       default = getwd(),
+			       help    = "output directory",
+			       metavar = "character"),
+		   make_option(opt_str = c("-s", "--species"),
+			       type    = "character",
+			       default = "human",
+			       help    = "species",
+			       metavar = "character"))
 
-args <- commandArgs(TRUE)
+optionParser <- OptionParser(option_list = optionList)
+option <- parse_args(optionParser)
 
-# Number of arguments
-n <- 4
-
-if (length(args) != n) {
-  cat("\nHey! you need to provide,",n,"arguments, in THIS EXACT ORDER:\n\n")
-  cat("\t>",script,"
-      \t\tresults_file-wide.txt
-      \t\tevidence.txt
-      \t\toutput_folder_name (e.g: output_midtod_20180508 )
-      \t\tspecie [human or mouse]
-      \n"
-  )
-  stop("bye bye!\n\n")
+if (is.null(option$file)) {
+  print_help(optionParser)
+  stop("At least two arguments must be supplied (result and evidence files)",
+       call. = FALSE)
 }
 
-# ------------------------------------------ BEGIN EDITABLE REGION ------------------------------------
-
-# # # DEBUG
-# setwd('~/sourcecode/artms/metabolomics/results/')
-# # 
-# # path to the results file in 'wide' format
-# results_file <- 'metabolomics-results-wide.txt'
-# # path to the evidence file used with MSStats
-# # evidence_file <- '/Users/shrivergroup/Documents/MSstat_Projects/Celina/Macrophage/H5/MSstats_v3/MKVWalignMDMpos_evidence.txt'
-# evidence_file <- '../H5THP1align_05292018-evidence.txt'
-# # The path to the file where you want the results outputted to
-# # out_file <- '/Users/shrivergroup/Documents/MSstat_Projects/Celina/Macrophage/H5/MSstats_v3/MKVWalignMDMpos_18h_results.txt'
-# out_folder <- 'output_midtod_debugging'
-# #  Specie!
-# specie <- 'human'
-
-# resutls file in wide format
-results_file <- args[1]
+# results file in wide format
+resultsFile <- option$file
 # path to the evidence file used with MSStats
-evidence_file <- args[2]
+evidenceFile <- option$evidence
 # The path to the file where you want the results outputted to
-out_folder <- args[3]
+outputDir <- option$"output-dir"
 # Choose the right hmdb
-specie <- args[4]
+species <- option$species 
 
 ###################################
 # CONFIGURATION:  User preferences
@@ -56,10 +47,10 @@ specie <- args[4]
 # FILE LOCATIONS:
 #-----------------
 # Source files (location of the other R script files)
-source('~/github/kroganlab/fluMetabolomics/scripts/mapMasses.R')
-source('~/github/kroganlab/fluMetabolomics/scripts/mz_to_kegg/searchDB4KEGG.R')
-source('~/github/kroganlab/fluMetabolomics/scripts/mz_to_hmdb/searchDB4HMDB.R')
-source('~/github/kroganlab/fluMetabolomics/scripts/aggregateResults.R')
+source(file = "scripts/mapMasses.R")
+source(file = "scripts/mz_to_kegg/searchDB4KEGG.R")
+source(file = "scripts/mz_to_hmdb/searchDB4HMDB.R")
+source(file = "scripts/aggregateResults.R")
 
 
 # SEARCH CONSTRAINTS
@@ -70,31 +61,31 @@ log2FC <- 1
 # any p-value below this is considered significant
 pvalue <- 0.05
 
-THRESH <- 0.05  # this is the amount we are willing to let the masses be off for identification +/-
-max_weight <- 500 # The maximum weight (in Daltons) of metabolites in KEGG to be included in the search
+threshold <- 0.05  # this is the amount we are willing to let the masses be off for identification +/-
+maxWeight <- 500 # The maximum weight (in Daltons) of metabolites in KEGG to be included in the search
 
 
 # # Database Files
 # #~~~~~~~~~~~~~~~~
 # # path to the Fluomics database file containing the significant hits
-flu_file <- '~/github/kroganlab/fluMetabolomics/files/AllSignificantData.txt'
+fluFile <- "files/AllSignificantData.txt"
 # # path to the KEGG database file
-kegg_file <- '~/github/kroganlab/fluMetabolomics/files/KEGG_EC_uniprot_mapping_20170125.txt'
+keggFile <- "files/KEGG_EC_uniprot_mapping_20170125.txt"
 # # path to the HMDB database file
 # OLD
-hmdb_file <- '~/github/kroganlab/fluMetabolomics/files/HMDB_20150729.txt'
+hmdbFile <- "files/HMDB_20150729.txt"
 # Updated
 # hmdb_file <- '~/Downloads/HMDB_endog_20180618.txt'
 
 # path to the file containing the mapping between HMDB and Entrez id's (MOUSE or HUMAN?)
 #     NOTE: Be sure to select the file for the correct species (mouse/human)
 
-if(specie == "human"){
-  hmdb.entrez_file <- '~/github/kroganlab/fluMetabolomics/files/HMDB2entrez_human.tsv'  
-}else if(specie == "mouse"){
-  hmdb.entrez_file <- '~/github/kroganlab/fluMetabolomics/files/HMDB2entrez_mouse.tsv'
-}else{
-  stop("\n\nWRONG SPECIE: only human or mouse is supported\n")
+if (species == "human") {
+  hmdbEntrezFile <- "files/HMDB2entrez_human.tsv"
+} else if (species == "mouse") {
+  hmdbEntrezFile <- "files/HMDB2entrez_mouse.tsv"
+} else {
+  stop("\n\nWRONG SPECIES: only human or mouse is supported\n")
 }
 
 # ------------------------------------------ END EDITABLE REGION ------------------------------------
@@ -102,8 +93,8 @@ if(specie == "human"){
 #########################
 # SEARCH HMDB 
 #########################
-cat("METABOLOMICS POST-PROCESSING PIPELINE\n\n")
-cat("---+ Loading files\n")
+message("METABOLOMICS POST-PROCESSING PIPELINE\n\n")
+message("---+ Loading files\n")
 
 # ~~~~~~~~~~~~~~~ 
 # MAPPING MASSES
@@ -111,53 +102,58 @@ cat("---+ Loading files\n")
 # This section will take an MSStats wide formatted file and map the non-rounded masses to the results for identification purposes.
 
 # Read the results file
-datadf <- read.delim(results_file, stringsAsFactors=F)
+dataDF <- read.delim(resultsFile, stringsAsFactors = FALSE)
 
 # Get the column names (comparisons)
-comparisons <- names(datadf)[grepl("_log2FC", names(datadf))]
-comparisons <- gsub("_log2FC","", comparisons)
+comparisons <- names(dataDF)[grepl("_log2FC", names(dataDF))]
+comparisons <- gsub(pattern = "_log2FC", replacement = "", comparisons)
 
-cat("---+ Ready to process all the relative quantifications:\n")
+message("---+ Ready to process all the relative quantifications:\n")
 
 for (one in comparisons){
   
   # Debugging
   # one <- 'H5THP1Inf3h.H5THP1Mo3h'
   
-  cat("--------------------------------------------\n")
-  cat(one," ===> ")
+  message("--------------------------------------------\n")
+  message(one," ===> ")
   
   # convert "-" to "." for R purposes
-  one <- gsub("-", ".", one)
+  one <- gsub(pattern = "-", replacement = ".", one)
   
-  log2FC_condition <- paste0(one,"_log2FC")
-  adj_pval_condition <- paste0(one,"_adj.pvalue")
+  log2FCcondition <- paste0(one, "_log2FC")
+  adjPvalCondition <- paste0(one, "_adj.pvalue")
   
-  cat(log2FC_condition," + ", adj_pval_condition,"\n")
-  cat("--------------------------------------------\n")
+  message(log2FCcondition, " + ", adjPvalCondition,"\n")
+  message("--------------------------------------------\n")
   
-  output_file_pre <- gsub(".txt", "", results_file)
-  out_file <- paste0(out_folder, "/", output_file_pre, "-", one, "-midtod.txt")
+  outputFilePre <- gsub(pattern = ".txt", replacement = "", basename(path = resultsFile))
+  outputFile <- paste0(outputDir, "/", outputFilePre, "-", one, "-midtod.txt")
   
-  # Mapp the non-rounded masses to the peak names ( rounded m.z./time )
-  to_search <- mapMasses(results_file, evidence_file, out_file)
+  # Map the non-rounded masses to the peak names ( rounded m.z./time )
+  toSearch <- mapMasses(results_file  = resultsFile,
+			evidence_file = evidenceFile,
+			out_file      = outputFile)
   # Keep only significant fold changes in the results
-  
-  to_search <- to_search[(abs(to_search[,log2FC_condition])>log2FC) & (to_search[,adj_pval_condition]<pvalue),]
+  toSearch <- toSearch[(abs(toSearch[, log2FCcondition]) > log2FC) &
+			 (toSearch[, adjPvalCondition] < pvalue), ]
 
   # Check point for finite values
-  rNames <- rownames(to_search)
-  to_search <- lapply(to_search, FUN = function(x) {
+  rowNames <- rownames(toSearch)
+  toSearch <- lapply(toSearch, FUN = function(x) {
     if ("numeric" %in% class(x))
       x[!is.finite(x)] <- NA
     return(value = x)
   })
-  to_search <- as.data.frame(to_search, row.names = rNames)
-  to_search <- to_search[complete.cases(to_search), , drop = FALSE]
+  toSearch <- as.data.frame(toSearch, row.names = rowNames)
+  toSearch <- toSearch[complete.cases(toSearch), , drop = FALSE]
 
-  if(dim(to_search)[1] > 0){
+  if (nrow(toSearch) > 1) {
     # prep for the DB search
-    to_search <- to_search[,c('Protein','m.z',log2FC_condition,adj_pval_condition)]
+    toSearch <- toSearch[, c("Protein",
+			     "m.z",
+			     log2FCcondition,
+			     adjPvalCondition)]
     
     # SEARCH KEGG AGAINST OTHER DATA SETS
     # -----------------------------------
@@ -165,8 +161,13 @@ for (one in comparisons){
     #   searches for any matches within a window +/- a THRESHold
     # Search the Fluomics OMICS database for genes associated with metabolites
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    results.kegg <- searchDB4KEGG(to_search, kegg_file, flu_file, out_file, THRESH, max_weight)
-
+    resultsKEGG <- searchDB4KEGG(input_file = toSearch,
+				 kegg_file  = keggFile,
+				 flu_file   = fluFile,
+				 out_file   = outputFile,
+				 THRESH     = threshold,
+				 max_weight = maxWeight)
+    
     # SEARCH HMDB AGAINST OTHER DATA SETS
     # -----------------------------------
     # This version is designed to work with the flat files offsite (not live mysql db)
@@ -174,15 +175,21 @@ for (one in comparisons){
     #   searches for any matches within a window +/- a THRESHold
     # Search the Fluomics OMICS database for genes associated with metabolites
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    results.hmdb <- searchDB4HMDB(to_search, hmdb_file, hmdb.entrez_file, flu_file, out_file, THRESH, max_weight)
+    resultsHMDB <- searchDB4HMDB(input_file       = toSearch,
+				 hmdb_file        = hmdbFile,
+				 hmdb.entrez_file = hmdbEntrezFile,
+				 flu_file         = fluFile,
+				 out_file         = outputFile,
+				 THRESH           = threshold,
+				 max_weight       = maxWeight)
     
     # combine the results and aggregate the information
-    results.agg <- aggregateResults(results.kegg, results.hmdb, out_file)
+    resultsAggregate <- aggregateResults(results.kegg = resultsKEGG,
+					 results.hmdb = resultsHMDB,
+					 out_file     = outputFile)
     
-    cat("\n",one,"is done\n\n")
-  }else{
-    cat("\nNOT ENOUGH SIGNIFICANT RESULTS FOR THIS COMPARISON\n\n")
+    message("\n",one,"is done\n\n")
+  } else{
+    message("\nNOT ENOUGH SIGNIFICANT RESULTS FOR THIS COMPARISON\n\n")
   }
 }
-
-cat(script, "is done. Have a nice day! \n\n")
