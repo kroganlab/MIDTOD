@@ -146,7 +146,14 @@ for (one in comparisons){
   to_search <- to_search[(abs(to_search[,log2FC_condition])>log2FC) & (to_search[,adj_pval_condition]<pvalue),]
 
   # Check point for finite values
-  to_search <- to_search[is.finite(to_search$H5THP1Inf3h.H5THP1Mo3h_log2FC),]
+  rNames <- rownames(to_search)
+  to_search <- lapply(to_search, FUN = function(x) {
+    if ("numeric" %in% class(x))
+      x[!is.finite(x)] <- NA
+    return(value = x)
+  })
+  to_search <- as.data.frame(to_search, row.names = rNames)
+  to_search <- to_search[complete.cases(to_search), , drop = FALSE]
 
   if(dim(to_search)[1] > 0){
     # prep for the DB search
