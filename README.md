@@ -17,3 +17,6 @@ s=[s]pecies
   accepted values: human, mouse
 ```
 
+## Note
+Evidence file are created using the R artMS package using the function
+*artmsConvertMetabolomics*
