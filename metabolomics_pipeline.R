@@ -56,13 +56,13 @@ source(file = "scripts/aggregateResults.R")
 # SEARCH CONSTRAINTS
 #--------------------
 
-# any log2 fold change above this value is considered significant (also applies to the negative value in the oposite way)
+# any log2 fold change above this value is considered significant (also applies to the negative value in the opposite way)
 log2FC <- 1
 # any p-value below this is considered significant
 pvalue <- 0.05
 
 threshold <- 0.05  # this is the amount we are willing to let the masses be off for identification +/-
-maxWeight <- 500 # The maximum weight (in Daltons) of metabolites in KEGG to be included in the search
+maxWeight <- 500 # The maximum weight (in Dalton) of metabolites in KEGG to be included in the search
 
 
 # # Database Files
