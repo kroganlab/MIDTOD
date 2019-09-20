@@ -16,3 +16,8 @@ o=[o]utput directory
 s=[s]pecies
   accepted values: human, mouse
 ```
+  
+Launch GUI
+```bash
+Rscript -e "shiny::runApp()"
+```
