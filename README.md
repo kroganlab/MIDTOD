@@ -19,5 +19,5 @@ s=[s]pecies
   
 Launch GUI
 ```bash
-Rscript -e "shiny::runApp()"
+Rscript -e "shiny::runApp(launch.browser = TRUE)"
 ```
