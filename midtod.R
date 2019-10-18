@@ -1,35 +1,44 @@
+#' Metabolite identification though orthogonal datasets 
+#' @description identify metabolites based on evidences from other
+#' dataset generated on the same samples.
+#' @author Slim Fourati, \email{sxf279@case.edu}
+#' @param resultsFile output of artMS
+#' @param evidenceFile output of mapviewer
+#' @param species human or mice
+#' @param outputDir directory to write output files
+#' @return None
+#' @examples
+#' midtod()
+#' @export
 midtod  <- function(resultsFile, evidenceFile, species, outputDir) {
-###################################
-# CONFIGURATION:  User preferences
-###################################
 
-# FILE LOCATIONS:
-#-----------------
-# Source files (location of the other R script files)
-source(file = "scripts/mapMasses.R")
-source(file = "scripts/mz_to_kegg/searchDB4KEGG.R")
-source(file = "scripts/mz_to_hmdb/searchDB4HMDB.R")
-source(file = "scripts/aggregateResults.R")
+  ## load subroutines ##
+  source(file = "scripts/mapMasses.R")
+  source(file = "scripts/mz_to_kegg/searchDB4KEGG.R")
+  source(file = "scripts/mz_to_hmdb/searchDB4HMDB.R")
+  source(file = "scripts/aggregateResults.R")
 
 
-# SEARCH CONSTRAINTS
-#--------------------
+  ## search constrains ##
+  # any log2 fold change above this value is considered significant
+  # (also applies to the negative value in the opposite way)
+  log2FC <- 1
+  # any p-value below this is considered significant
+  pvalue <- 0.05
+  # this is the amount we are willing to let the masses be off for
+  # identification +/-
+  threshold <- 0.05
+  # the maximum weight (in Dalton) of metabolites in KEGG to be included
+  # in the search
+  maxWeight <- 500 
 
-# any log2 fold change above this value is considered significant (also applies to the negative value in the opposite way)
-log2FC <- 1
-# any p-value below this is considered significant
-pvalue <- 0.05
-
-threshold <- 0.05  # this is the amount we are willing to let the masses be off for identification +/-
-maxWeight <- 500 # The maximum weight (in Dalton) of metabolites in KEGG to be included in the search
-
-
-# # Database Files
-# #~~~~~~~~~~~~~~~~
-# # path to the Fluomics database file containing the significant hits
-fluFile <- "files/AllSignificantData.txt"
-# # path to the KEGG database file
-keggFile <- "files/KEGG_EC_uniprot_mapping_20170125.txt"
+  ## orthogonal data files ##
+  # path to the Fluomics database file containing the significant hits
+  fluFile <- "files/AllSignificantData.txt"
+  # path to the KEGG database file
+  keggFile <- list.files(path       = "files",
+			 pattern    = "KEGG_EC_uniprot_mapping",
+			 full.names = TRUE)
 # # path to the HMDB database file
 # OLD
 hmdbFile <- "files/HMDB_20150729.txt"

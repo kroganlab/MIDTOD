@@ -9,10 +9,10 @@
 # FILE LOCATIONS:
 #-----------------
 # Source files (location of the other R script files)
-source('~/github/kroganlab/fluMetabolomics/scripts/mapMasses.R')
-source('~/github/kroganlab/fluMetabolomics/scripts/mz_to_kegg/searchDB4KEGG.R')
-source('~/github/kroganlab/fluMetabolomics/scripts/mz_to_hmdb/searchDB4HMDB.R')
-source('~/github/kroganlab/fluMetabolomics/scripts/aggregateResults.R')
+source('scripts/mapMasses.R')
+source('scripts/mz_to_kegg/searchDB4KEGG.R')
+source('scripts/mz_to_hmdb/searchDB4HMDB.R')
+source('scripts/aggregateResults.R')
 
 
 
@@ -44,7 +44,9 @@ max_weight = 500 # The maximum weight (in Daltons) of metabolites in KEGG to be 
 # path to the Fluomics database file containing the significant hits
 flu_file = '~/github/kroganlab/fluMetabolomics/files/AllSignificantData.txt'
 # path to the KEGG database file
-kegg_file = '~/github/kroganlab/fluMetabolomics/files/KEGG_EC_uniprot_mapping_20170125.txt'
+kegg_file  <- list.files(path       = "files",
+			 pattern    = "KEGG_EC_uniprot_mapping",
+			 full.names = TRUE)
 # path to the HMDB database file
 hmdb_file = '~/github/kroganlab/fluMetabolomics/files/HMDB_20150729.txt'
 
