@@ -40,6 +40,7 @@ searchHMDB <- function(x, hmdb, THRESH){
   }
   close(pb)
   
+  message ("Of ", length(metabolites), " metabolites, ", length(metabolite_matches), " matches were found in HMDB")
   tmp = do.call(rbind,metabolite_matches)
   return(tmp)
 }
@@ -63,15 +64,24 @@ searchDB4HMDB <- function(input_file, hmdb_file, hmdb.entrez_file, flu_file, out
   names(hmdb.entrez)[grep('entrez_gene_id_mouse',names(hmdb.entrez))] = 'entrez_id'
   
   
-  # Load significant hits from other datasets
-  flu <- read.delim(flu_file, sep='\t', stringsAsFactors=F, header=T)
-  flu <- flu[,c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   # remove unnecessary variables
+  # Load significant hits from other OMICS datasets
+  if ("data.frame" %in% class(flu_file)){
+    flu = flu_file
+  }else{
+    flu <- read.delim(flu_file, sep='\t', stringsAsFactors=F, header=T)
+    flu <- flu[,c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   # remove unnecessary variables
+  }
   
   # search for masses in HMDB 
   hmdb_hits = searchHMDB(dat, hmdb, THRESH)
+
+  if (is.null(hmdb_hits)){
+    return (data.frame())
+  }
+
   cat(">> Matching Peaks to significant hits in other data sets...\n")
   # match up all Peak names with the hits
-  hmdb_hits = merge(hmdb_hits, dat[,c('Protein','m.z')], by='m.z')
+  hmdb_hits = merge(hmdb_hits, dat, by='m.z')
   # get entrez id's corresponding to HMDB id's
   hmdb_hits = merge(hmdb_hits, hmdb.entrez[,c('hmdb', 'entrez_id')], by.x='id', by.y='hmdb')    ##### for MOUSE
   # check the rest of the flu datasets for significant matches

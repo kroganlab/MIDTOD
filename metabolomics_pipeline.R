@@ -21,9 +21,16 @@ optionList <- list(make_option(opt_str = c("-f", "--file"),
 			       type    = "character",
 			       default = "human",
 			       help    = "species",
-			       metavar = "character"))
+			       metavar = "character"),
+		   make_option(opt_str = c("-I", "--remove-infinites"),
+		               type    = "logical",
+		               default = FALSE,
+		               help    = "remove infinite values in log2FC column (default is to leave them in)",
+		               action="store_true",)
+)
 
 optionParser <- OptionParser(option_list = optionList)
+
 option <- parse_args(optionParser)
 
 if (is.null(option$file)) {
@@ -35,4 +42,5 @@ if (is.null(option$file)) {
 midtod(resultsFile  = option$file,
        evidenceFile = option$evidence,
        outputDir    = option$"output-dir",
-       species      = option$species)
+       species      = option$species,
+       remove.infinites = option$"remove-infinites")

@@ -49,6 +49,7 @@ searchKEGG <- function(x, kegg, THRESH){
   }
   close(pb)
   
+  message ("Of ", length(metabolites), " metabolites, ", length(metabolite_matches), " matches were found in KEGG")
   tmp = do.call(rbind,metabolite_matches)
   return(tmp)
 }
@@ -74,15 +75,21 @@ searchDB4KEGG <- function(input_file, kegg_file, flu_file, out_file, THRESH, max
   }
   
   # Load significant hits from other OMICS datasets
-  flu <- read.delim(flu_file, sep='\t', stringsAsFactors=F, header=T)
-  flu <- flu[,c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   # remove unnecessary variables
-  
+  if ("data.frame" %in% class(flu_file)){
+    flu = flu_file
+  }else{
+    flu <- read.delim(flu_file, sep='\t', stringsAsFactors=F, header=T)
+    flu <- flu[,c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   # remove unnecessary variables
+  }
   # search for masses in KEGG 
   kegg_hits = searchKEGG(dat, kegg, THRESH)
  
   cat(">> Matching Peaks to significant hits in other data sets...\n")
   # match up all Peak names with the hits
-  kegg_hits = merge(kegg_hits, dat[,c('Protein','m.z')], by='m.z')
+  if (is.null(kegg_hits)){
+    return (data.frame())
+  }
+  kegg_hits = merge(kegg_hits, dat, by='m.z')
   
   # get entrez id's corresponding to HMDB id's
   # kegg_hits = merge(kegg_hits, kegg.entrez[,c('hmdb', 'entrez_id')], by.x='id', by.y='hmdb')    ##### for MOUSE

@@ -10,7 +10,7 @@
 #' @examples
 #' midtod()
 #' @export
-midtod  <- function(resultsFile, evidenceFile, species, outputDir) {
+midtod  <- function(resultsFile, evidenceFile, species, outputDir, remove.infinites=FALSE) {
 
   ## load subroutines ##
   source(file = "scripts/mapMasses.R")
@@ -76,6 +76,13 @@ dataDF <- read.delim(resultsFile, stringsAsFactors = FALSE)
 comparisons <- names(dataDF)[grepl("_log2FC", names(dataDF))]
 comparisons <- gsub(pattern = "_log2FC", replacement = "", comparisons)
 
+# pre-load flu data here instead of once per each search per loop. This should save a bit of time
+# Load significant hits from other OMICS datasets
+message ("loading omics data from ", fluFile)
+flu <- read.delim(fluFile, sep='\t', stringsAsFactors=F, header=T)
+flu <- flu[,c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   # remove unnecessary variables
+
+
 message("---+ Ready to process all the relative quantifications:\n")
 
 for (one in comparisons){
@@ -111,21 +118,32 @@ for (one in comparisons){
 			 (toSearch[, adjPvalCondition] < pvalue), ]
 
   # Check point for finite values
-  rowNames <- rownames(toSearch)
-  toSearch <- lapply(toSearch, FUN = function(x) {
-    if ("numeric" %in% class(x))
-      x[!is.finite(x)] <- NA
-    return(value = x)
-  })
-  toSearch <- as.data.frame(toSearch, row.names = rowNames)
+  if (remove.infinites){
+    # preserve rownames because we are about to lose them with lapply
+    rowNames <- rownames(toSearch)
+    toSearch <- lapply(toSearch,
+                       FUN = function(x) {
+                         if ("numeric" %in% class(x))
+                           x[!is.finite(x)] <- NA
+                         return(value = x)
+                       })
+    #convert back to data.frame and assign row names
+    toSearch <- as.data.frame(toSearch, row.names = rowNames)
+  }
+  # prep table for the DB search and eventual output of important columns
+  toSearch$contrast = gsub ("_log2FC", "", log2FCcondition)
+  names(toSearch)[which(names(toSearch)==log2FCcondition)] <- "log2FC"
+  names(toSearch)[which(names(toSearch)==adjPvalCondition)] <- "adj.pvalue"
+
+  #limit to only columns of interest before checking for complete cases
+  toSearch <- toSearch[, c("Protein",
+                           "m.z",
+                           "contrast",
+                           "log2FC",
+                           "adj.pvalue")]
   toSearch <- toSearch[complete.cases(toSearch), , drop = FALSE]
 
-  if (nrow(toSearch) > 1) {
-    # prep for the DB search
-    toSearch <- toSearch[, c("Protein",
-			     "m.z",
-			     log2FCcondition,
-			     adjPvalCondition)]
+  if (nrow(toSearch) > 0) {
     
     # SEARCH KEGG AGAINST OTHER DATA SETS
     # -----------------------------------
@@ -135,7 +153,7 @@ for (one in comparisons){
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     resultsKEGG <- searchDB4KEGG(input_file = toSearch,
 				 kegg_file  = keggFile,
-				 flu_file   = fluFile,
+				 flu_file   = flu,#fluFile,
 				 out_file   = outputFile,
 				 THRESH     = threshold,
 				 max_weight = maxWeight)
@@ -150,7 +168,7 @@ for (one in comparisons){
     resultsHMDB <- searchDB4HMDB(input_file       = toSearch,
 				 hmdb_file        = hmdbFile,
 				 hmdb.entrez_file = hmdbEntrezFile,
-				 flu_file         = fluFile,
+				 flu_file         = flu,#fluFile,
 				 out_file         = outputFile,
 				 THRESH           = threshold,
 				 max_weight       = maxWeight)
@@ -160,7 +178,7 @@ for (one in comparisons){
 					 results.hmdb = resultsHMDB,
 					 out_file     = outputFile)
     
-    message("\n",one,"is done\n\n")
+    message("\n",one," is done\n\n")
   } else{
     message("\nNOT ENOUGH SIGNIFICANT RESULTS FOR THIS COMPARISON\n\n")
   }
