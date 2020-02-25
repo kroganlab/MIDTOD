@@ -45,7 +45,8 @@ hmdbEntrezFiles <- lapply (hmdbEntrezFiles, FUN = function(file)file.path(getwd(
 
 
 
-midtod  <- function(resultsFile, evidenceFile, species, outputDir, remove.infinites=FALSE) {
+midtod  <- function(resultsFile, evidenceFile, species, outputDir, 
+                    remove.infinites=FALSE, orthogonalDataFile = NULL) {
 
 
   ## search constraints ##
@@ -92,6 +93,9 @@ comparisons <- gsub(pattern = "_log2FC", replacement = "", comparisons)
 
 # pre-load flu data here instead of once per each search per loop. This should save a bit of time
 # Load significant hits from other OMICS datasets
+if (!is.null(orthogonalDataFile)){
+  fluFile <- orthogonalDataFile
+}
 message ("loading omics data from ", fluFile)
 flu <- read.delim(fluFile, sep='\t', stringsAsFactors=F, header=T)
 # limit by significance and remove unnecessary variables
