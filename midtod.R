@@ -41,15 +41,7 @@ hmdbFile <- file.path(getwd(), "files/HMDB_20150729.txt")
 
 hmdbEntrezFiles <- list(mouse="files/HMDB2entrez_mouse.tsv",
                         human="files/HMDB2entrez_human.tsv")
-hmdbEntrezFiles <- apply (hmdbEntrezFiles, FUN = function(file)file.path(getwd(),file))
-if (species == "human") {
-  hmdbEntrezFile <- "files/HMDB2entrez_human.tsv"
-} else if (species == "mouse") {
-  hmdbEntrezFile <- "files/HMDB2entrez_mouse.tsv"
-} else {
-  stop("\n\nWRONG SPECIES: only human or mouse is supported\n")
-}
-
+hmdbEntrezFiles <- lapply (hmdbEntrezFiles, FUN = function(file)file.path(getwd(),file))
 
 
 
