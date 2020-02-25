@@ -102,9 +102,9 @@ comparisons <- gsub(pattern = "_log2FC", replacement = "", comparisons)
 # Load significant hits from other OMICS datasets
 message ("loading omics data from ", fluFile)
 flu <- read.delim(fluFile, sep='\t', stringsAsFactors=F, header=T)
-flu <- flu[,c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   # remove unnecessary variables
-
-
+# limit by significance and remove unnecessary variables
+flu <- flu[flu$q_value < pvalue & flu$log2fc > log2FC,
+           c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   
 message("---+ Ready to process all the relative quantifications:\n")
 
 for (one in comparisons){
