@@ -10,44 +10,38 @@
 #' @examples
 #' midtod()
 #' @export
-midtod  <- function(resultsFile, evidenceFile, species, outputDir, remove.infinites=FALSE) {
-
-  ## load subroutines ##
-  source(file = "scripts/mapMasses.R")
-  source(file = "scripts/mz_to_kegg/searchDB4KEGG.R")
-  source(file = "scripts/mz_to_hmdb/searchDB4HMDB.R")
-  source(file = "scripts/aggregateResults.R")
 
 
-  ## search constrains ##
-  # any log2 fold change above this value is considered significant
-  # (also applies to the negative value in the opposite way)
-  log2FC <- 1
-  # any p-value below this is considered significant
-  pvalue <- 0.05
-  # this is the amount we are willing to let the masses be off for
-  # identification +/-
-  threshold <- 0.05
-  # the maximum weight (in Dalton) of metabolites in KEGG to be included
-  # in the search
-  maxWeight <- 500 
 
-  ## orthogonal data files ##
-  # path to the Fluomics database file containing the significant hits
-  fluFile <- "files/AllSignificantData.txt"
-  # path to the KEGG database file
-  keggFile <- list.files(path       = "files",
-			 pattern    = "KEGG_EC_uniprot_mapping",
-			 full.names = TRUE)
+# paths must resolve while sourcing, so convert all relative paths outside of a function:
+
+## load subroutines ##
+source(file = "scripts/mapMasses.R")
+source(file = "scripts/mz_to_kegg/searchDB4KEGG.R")
+source(file = "scripts/mz_to_hmdb/searchDB4HMDB.R")
+source(file = "scripts/aggregateResults.R")
+
+## orthogonal data files ##
+# path to the Fluomics database file containing the significant hits
+fluFile <- file.path(getwd(),"files/AllSignificantData.txt")
+# path to the KEGG database file
+keggFile <- file.path(getwd(),
+                      list.files(path       = "files",
+                                 pattern    = "KEGG_EC_uniprot_mapping",
+                                 full.names = TRUE))
 # # path to the HMDB database file
 # OLD
-hmdbFile <- "files/HMDB_20150729.txt"
+hmdbFile <- file.path(getwd(), "files/HMDB_20150729.txt")
 # Updated
 # hmdb_file <- '~/Downloads/HMDB_endog_20180618.txt'
 
 # path to the file containing the mapping between HMDB and Entrez id's (MOUSE or HUMAN?)
 #     NOTE: Be sure to select the file for the correct species (mouse/human)
 
+
+hmdbEntrezFiles <- list(mouse="files/HMDB2entrez_mouse.tsv",
+                        human="files/HMDB2entrez_human.tsv")
+hmdbEntrezFiles <- apply (hmdbEntrezFiles, FUN = function(file)file.path(getwd(),file))
 if (species == "human") {
   hmdbEntrezFile <- "files/HMDB2entrez_human.tsv"
 } else if (species == "mouse") {
@@ -56,8 +50,36 @@ if (species == "human") {
   stop("\n\nWRONG SPECIES: only human or mouse is supported\n")
 }
 
+
+
+
+midtod  <- function(resultsFile, evidenceFile, species, outputDir, remove.infinites=FALSE) {
+
+
+  ## search constraints ##
+  ## theses thresholds do double-duty: 1) they filter the orthogonal data 2) they filter the metabolite MS data
+  # any log2 fold change above this value is considered significant
+  # (also applies to the negative value in the opposite way)
+  log2FC <- 1
+  # any p-value below this is considered significant
+  pvalue <- 0.05
+  
+  # this is the amount we are willing to let the masses be off for
+  # identification +/-
+  threshold <- 0.05
+  # the maximum weight (in Dalton) of metabolites in KEGG to be included
+  # in the search
+  maxWeight <- 500 
+
+
 # ------------------------------------------ END EDITABLE REGION ------------------------------------
 
+hmdbEntrezFile <- hmdbEntrezFiles[[species]]
+if(is.null(hmdbEntrezFile)){
+  stop("\n\nWRONG SPECIES: ", species,": only human or mouse is supported\n")
+  
+}
+  
 #########################
 # SEARCH HMDB 
 #########################
