@@ -99,8 +99,9 @@ searchDB4KEGG <- function(input_file, kegg_file, flu_file, out_file, THRESH, max
   
   # Remove duplicate metabolite ID's
   kegg_hits.long <- unique(kegg_hits.long[,-grep("condition_2|cell_line|strain", names(kegg_hits.long))])
-  # convert symbols to uppercase
-  kegg_hits.long$symbol = toupper(kegg_hits.long$symbol)
+  
+  # convert symbols to uppercase  -- why?  
+  #kegg_hits.long$symbol = toupper(kegg_hits.long$symbol)
   
   
   # aggregate all the gene names and experiment_id's

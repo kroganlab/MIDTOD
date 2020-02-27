@@ -46,11 +46,12 @@ hmdbEntrezFiles <- lapply (hmdbEntrezFiles, FUN = function(file)file.path(getwd(
 
 
 midtod  <- function(resultsFile, evidenceFile, species, outputDir, 
-                    remove.infinites=FALSE, orthogonalDataFile = NULL) {
+                    remove.infinites=FALSE, orthogonalDataFile = NULL,
+                    filterResults = TRUE) {
 
 
   ## search constraints ##
-  ## theses thresholds do double-duty: 1) they filter the orthogonal data 2) they filter the metabolite MS data
+  ## theses thresholds do double-duty: 1) they filter the orthogonal data 2) if filterResults == TRUE, they filter the metabolite MS data
   # any log2 fold change above this value is considered significant
   # (also applies to the negative value in the opposite way)
   log2FC <- 1
@@ -131,10 +132,12 @@ for (one in comparisons){
   toSearch <- mapMasses(results_file  = resultsFile,
 			evidence_file = evidenceFile,
 			out_file      = outputFile)
-  # Keep only significant fold changes in the results
-  toSearch <- toSearch[(abs(toSearch[, log2FCcondition]) > log2FC) &
-			 (toSearch[, adjPvalCondition] < pvalue), ]
-
+  
+  if (filterResults){
+    # Keep only significant fold changes in the results
+    toSearch <- toSearch[(abs(toSearch[, log2FCcondition]) > log2FC) &
+                           (toSearch[, adjPvalCondition] < pvalue), ]
+  }
   # Check point for finite values
   if (remove.infinites){
     # preserve rownames because we are about to lose them with lapply
