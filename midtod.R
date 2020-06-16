@@ -47,16 +47,18 @@ hmdbEntrezFiles <- lapply (hmdbEntrezFiles, FUN = function(file)file.path(getwd(
 
 midtod  <- function(resultsFile, evidenceFile, species, outputDir, 
                     remove.infinites=FALSE, orthogonalDataFile = NULL,
-                    filterResults = TRUE) {
+                    filterResults = TRUE,
+                    log2FC = 1,
+                    pvalue = 0.05) {
 
 
   ## search constraints ##
   ## theses thresholds do double-duty: 1) they filter the orthogonal data 2) if filterResults == TRUE, they filter the metabolite MS data
   # any log2 fold change above this value is considered significant
   # (also applies to the negative value in the opposite way)
-  log2FC <- 1
+  #log2FC <- 1
   # any p-value below this is considered significant
-  pvalue <- 0.05
+  #pvalue <- 0.05
   
   # this is the amount we are willing to let the masses be off for
   # identification +/-
