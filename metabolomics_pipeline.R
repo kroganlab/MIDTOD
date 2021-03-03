@@ -26,9 +26,14 @@ optionList <- list(make_option(opt_str = c("-f", "--file"),
 		               type    = "logical",
 		               default = FALSE,
 		               help    = "remove infinite values in log2FC column (default is to leave them in)",
-		               action="store_true",)
+		               action="store_true",),
+		   make_option(opt_str = c("-x", "--orthogonal-data-file"),
+		               type    = "character",
+		               default = NULL,
+		               help    = "file of other OMICS results to find significantly regulated metabolite-associated-genes",
+		               metavar = "character")
+		   
 )
-
 optionParser <- OptionParser(option_list = optionList)
 
 option <- parse_args(optionParser)
@@ -43,4 +48,5 @@ midtod(resultsFile  = option$file,
        evidenceFile = option$evidence,
        outputDir    = option$"output-dir",
        species      = option$species,
-       remove.infinites = option$"remove-infinites")
+       remove.infinites = option$"remove-infinites",
+       orthogonalDataFile = option$"orthogonal-data-file")

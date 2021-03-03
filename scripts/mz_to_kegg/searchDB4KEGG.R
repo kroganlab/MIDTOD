@@ -115,6 +115,7 @@ searchDB4KEGG <- function(input_file, kegg_file, flu_file, out_file, THRESH, max
   kegg_hits.agg <- merge(tmp, input_file, by=c('Protein','m.z'))
   
   cat(">> Writing results to file...\n")
+  write.table(unique(kegg_hits[, c("m.z", "Protein", "name","contrast", "log2FC", "adj.pvalue")]), gsub (".txt", "_KEGG_mass_matches.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   write.table(kegg_hits.agg ,gsub(".txt", "_KEGG_aggregated.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   write.table(kegg_hits.long ,gsub(".txt", "_KEGG_long.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   

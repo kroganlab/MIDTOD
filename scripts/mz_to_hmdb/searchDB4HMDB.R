@@ -101,6 +101,7 @@ searchDB4HMDB <- function(input_file, hmdb_file, hmdb.entrez_file, flu_file, out
   tmp <- merge(tmp, input_file, by=c('Protein','m.z'))
   
   cat(">> Writing results to file...\n")
+  write.table(unique(hmdb_hits[, c("m.z", "Protein", "name","contrast", "log2FC", "adj.pvalue")]), gsub (".txt", "_HMDB_mass_matches.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   write.table(tmp ,gsub(".txt", "_HMDB_Aggregated.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   write.table(hmdb_hits.long ,gsub(".txt", "_HMDB_long.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   
