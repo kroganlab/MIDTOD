@@ -37,7 +37,7 @@ midtod(resultsFile  = "H1HTBERerun_06302019_results-wide.txt",
        outputDir    = outDir,
        species      = "human",
        remove.infinites = FALSE,
-       orthogonalDataFile = "data/2020_09_03foldChangesForMIODTOD.htbe.thp1.csv.gz",
+       orthogonalDataFile = "data/2020_09_03foldChangesForMIODTOD.htbe.thp1.tsv.gz",
        log2FC = 1,
        pvalue = 0.05,
        filterResult = FALSE
@@ -59,7 +59,7 @@ Orthogonal data set is expected to have the following column names
   log2fc
 ```
 
-Orthogonal data set example:
+Orthogonal data set example. Formatted here for ease of reading.  Actual inputted file should be tab separated text values.
 ```
               experiment_id omics_type condition_2 cell_line strain entrez_id  symbol      q_value    log2fc
     1: PH-site_htbe_H3N2_18    PH-site    H3N2_18H      htbe   H3N2     10528   NOP56 0.0041462891  2.798370
