@@ -102,7 +102,7 @@ if (!is.null(orthogonalDataFile)){
 message ("loading omics data from ", fluFile)
 flu <- read.delim(fluFile, sep='\t', stringsAsFactors=F, header=T)
 # limit by significance and remove unnecessary variables
-flu <- flu[!is.na(q_value) & flu$q_value < pvalue &  # check for reasonable q_values
+flu <- flu[!is.na(flu$q_value) & flu$q_value < pvalue &  # check for reasonable q_values
              abs(flu$log2fc) > log2FC & abs(flu$log2fc) < 1e3,  # check for reasonable log2FC -- this removes outliers and infinites
            c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   
 message("---+ Ready to process all the relative quantifications:\n")
