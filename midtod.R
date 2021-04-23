@@ -44,16 +44,37 @@ hmdbEntrezFiles <- list(mouse="files/HMDB2entrez_mouse.tsv",
 hmdbEntrezFiles <- lapply (hmdbEntrezFiles, FUN = function(file)file.path(getwd(),file))
 
 
+# ------- utility function and masses -------
+modMasses.positive <- c(  H   = 1.007276,
+                          NH4 = 18.033823,
+                          Na  = 22.989218,
+                          K   = 38.963158)
+
+modMasses.negative <- c(Hloss   = -1.007276,
+                        Cl      =  34.969402,
+                        H3Oloss = -19.01839)
+
+# returns indexes of targetMasses that match queryMZ after removing possible modMasses and applying THRESH 
+# used by searchDB4HMDB and searchKEGG
+matchMZAgainstMetaboliteDB <- function(queryMZ, targetMasses, modMasses, THRESH){
+  unModifiedQueries <- queryMZ-modMasses
+  targetMatchIdx <- unique(unlist(lapply(unModifiedQueries, function(mq) which (abs(targetMasses-mq) < THRESH))))
+  return (targetMatchIdx)
+}
+
+# ----- MAIN midtod -------
+
 
 midtod  <- function(resultsFile, evidenceFile, species, outputDir, 
                     remove.infinites=FALSE, orthogonalDataFile = NULL,
                     filterResults = TRUE,
                     log2FC = 1,
-                    pvalue = 0.05) {
+                    pvalue = 0.05,
+                    mode = c("positive", "negative")[1]) {
 
 
   ## search constraints ##
-  ## theses thresholds do double-duty: 1) they filter the orthogonal data 2) if filterResults == TRUE, they filter the metabolite MS data
+  ## these thresholds do double-duty: 1) they filter the orthogonal data 2) if filterResults == TRUE, they filter the metabolite MS data
   # any log2 fold change above this value is considered significant
   # (also applies to the negative value in the opposite way)
   #log2FC <- 1
@@ -67,8 +88,14 @@ midtod  <- function(resultsFile, evidenceFile, species, outputDir,
   # in the search
   maxWeight <- 500 
 
-
-# ------------------------------------------ END EDITABLE REGION ------------------------------------
+  if (mode == "positive")
+    modMasses <- modMasses.positive
+  else if (mode == "negative")
+    modMasses <- modMasses.negative
+  else stop("Mode must be one of 'positive' or 'negative'")
+  message (sprintf("\nMode set to %s. Will consider these modifications:", mode))
+  print (modMasses)
+  message ("")
 
 hmdbEntrezFile <- hmdbEntrezFiles[[species]]
 if(is.null(hmdbEntrezFile)){
@@ -180,7 +207,8 @@ for (one in comparisons){
 				 flu_file   = flu,#fluFile,
 				 out_file   = outputFile,
 				 THRESH     = threshold,
-				 max_weight = maxWeight)
+				 max_weight = maxWeight,
+				 modMasses  = modMasses)
     
     # SEARCH HMDB AGAINST OTHER DATA SETS
     # -----------------------------------
@@ -195,7 +223,8 @@ for (one in comparisons){
 				 flu_file         = flu,#fluFile,
 				 out_file         = outputFile,
 				 THRESH           = threshold,
-				 max_weight       = maxWeight)
+				 max_weight       = maxWeight,
+				 modMasses        = modMasses)
     
     # combine the results and aggregate the information
     resultsAggregate <- aggregateResults(results.kegg = resultsKEGG,

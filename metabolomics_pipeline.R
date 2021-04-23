@@ -31,7 +31,11 @@ optionList <- list(make_option(opt_str = c("-f", "--file"),
 		               type    = "character",
 		               default = NULL,
 		               help    = "file of other OMICS results to find significantly regulated metabolite-associated-genes",
-		               metavar = "character")
+		               metavar = "character"),
+		   make_option(opt_str = c("-m", "--mode"),
+		               type = "character",
+		               default = "positive",
+		               help ="look for matching masses as if ions have a 'positive' (default) or 'negative' charge")
 		   
 )
 optionParser <- OptionParser(option_list = optionList)
@@ -49,4 +53,5 @@ midtod(resultsFile  = option$file,
        outputDir    = option$"output-dir",
        species      = option$species,
        remove.infinites = option$"remove-infinites",
-       orthogonalDataFile = option$"orthogonal-data-file")
+       orthogonalDataFile = option$"orthogonal-data-file",
+       mode         = option$mode)

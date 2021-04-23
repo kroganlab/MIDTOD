@@ -22,6 +22,7 @@ o=[o]utput directory
 s=[s]pecies
   accepted values: human, mouse
 x=orthogonal data file
+m=[m]ode: positive or negative.  The expected charge on the metabolites in MS
 ```
   
 For full control, run within R:
@@ -40,7 +41,8 @@ midtod(resultsFile  = "H1HTBERerun_06302019_results-wide.txt",
        orthogonalDataFile = "data/2020_09_03foldChangesForMIODTOD.htbe.thp1.tsv.gz",
        log2FC = 1,
        pvalue = 0.05,
-       filterResult = FALSE
+       filterResult = FALSE,
+       mode = "positive"
        )
 
 ```

@@ -5,33 +5,16 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  LOAD FUNCTIONS INTO MEMORY FIRST ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-searchHMDB <- function(x, hmdb, THRESH){
+
+searchHMDB <- function(x, hmdb, THRESH, modMasses){
   cat('>> Using fuzzy search to find matching masses in HMDB...\n')
-  H= 1.007276
-  NH4=18.033823
-  Na=22.989218
-  K=38.963158
-  Cl=34.969402
-  
+
   metabolites <- unique(x$m.z)
   metabolite_matches = list()
   pb <- txtProgressBar(min=0, max=length(metabolites), style=3)
   for(i in 1:length(metabolites)){
-    mHp = metabolites[i] - H
-    mNH4p = metabolites[i] - NH4
-    mNap = metabolites[i] - Na
-    mKp = metabolites[i] - K
-    #mHn = metabolites[i] + H
-    #mCln = metabolites[i] + Cl
-    
-    mHp = which( (hmdb$weight >= (mHp-THRESH)) & (hmdb$weight <= (mHp+THRESH)) )
-    mNH4p = which( (hmdb$weight >= (mNH4p-THRESH)) & (hmdb$weight <= (mNH4p+THRESH)) )
-    mNap = which( (hmdb$weight >= (mNap-THRESH)) & (hmdb$weight <= (mNap+THRESH)) )
-    mKp = which( (hmdb$weight >= (mKp-THRESH)) & (hmdb$weight <= (mKp+THRESH)) )
-    #mHn = which( (hmdb$weight >= (mHn-THRESH)) & (hmdb$weight <= (mHn+THRESH)) )
-    #mCln = which( (hmdb$weight >= (mCln-THRESH)) & (hmdb$weight <= (mCln+THRESH)) )
-    
-    idx = c(mHp, mNH4p, mNap, mKp) #, mHn, mCln)
+    idx <- matchMZAgainstMetaboliteDB(queryMZ = metabolites[i], targetMasses=hmdb$weight,
+                                      modMasses = modMasses, THRESH=THRESH)
     if( sum(idx)>0 ){
       idx = unique(idx)
       metabolite_matches[[i]] = cbind(hmdb[idx,], "m.z"=metabolites[i])
@@ -40,14 +23,14 @@ searchHMDB <- function(x, hmdb, THRESH){
   }
   close(pb)
   
-  message ("Of ", length(metabolites), " metabolites, ", length(metabolite_matches), " matches were found in HMDB")
+  message ("Of ", length(metabolites), " metabolites, ", length(metabolite_matches), " matches were found in DB")
   tmp = do.call(rbind,metabolite_matches)
   return(tmp)
 }
 
 
 #  Main function to search handle search
-searchDB4HMDB <- function(input_file, hmdb_file, hmdb.entrez_file, flu_file, out_file, THRESH, max_weight=Inf){
+searchDB4HMDB <- function(input_file, hmdb_file, hmdb.entrez_file, flu_file, out_file, THRESH, max_weight=Inf, modMasses = modMasses.positive){
   cat(">> Loading files...\n")
   # Load metabolite list
   dat <- input_file
@@ -73,7 +56,7 @@ searchDB4HMDB <- function(input_file, hmdb_file, hmdb.entrez_file, flu_file, out
   }
   
   # search for masses in HMDB 
-  hmdb_hits = searchHMDB(dat, hmdb, THRESH)
+  hmdb_hits = searchHMDB(dat, hmdb, THRESH, modMasses)
 
   if (is.null(hmdb_hits)){
     return (data.frame())
