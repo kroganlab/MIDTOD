@@ -5,42 +5,16 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  LOAD FUNCTIONS INTO MEMORY FIRST ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-searchKEGG <- function(x, kegg, THRESH){
-  
-  # Debugging
-  # x <- dat
-  
+searchKEGG <- function(x, kegg, THRESH, modMasses){
   
   cat('>> Using fuzzy search to find matching masses in KEGG...\n')
-  H= 1.007276
-  NH4=18.033823
-  Na=22.989218
-  K=38.963158
-  Cl=34.969402
-  
+
   metabolites <- unique(x$m.z)
   metabolite_matches = list()
   pb <- txtProgressBar(min=0, max=length(metabolites), style=3)
   for(i in 1:length(metabolites)){
-    # 
-    # # Debugging
-    # i <- 1
-    # 
-    mHp = metabolites[i] - H
-    mNH4p = metabolites[i] - NH4
-    mNap = metabolites[i] - Na
-    mKp = metabolites[i] - K
-    #mHn = metabolites[i] + H
-    #mCln = metabolites[i] + Cl
-    
-    mHp = which( (kegg$EXACT_MASS >= (mHp-THRESH)) & (kegg$EXACT_MASS <= (mHp+THRESH)) )
-    mNH4p = which( (kegg$EXACT_MASS >= (mNH4p-THRESH)) & (kegg$EXACT_MASS <= (mNH4p+THRESH)) )
-    mNap = which( (kegg$EXACT_MASS >= (mNap-THRESH)) & (kegg$EXACT_MASS <= (mNap+THRESH)) )
-    mKp = which( (kegg$EXACT_MASS >= (mKp-THRESH)) & (kegg$EXACT_MASS <= (mKp+THRESH)) )
-    #mHn = which( (kegg$EXACT_MASS >= (mHn-THRESH)) & (kegg$EXACT_MASS <= (mHn+THRESH)) )
-    #mCln = which( (kegg$EXACT_MASS >= (mCln-THRESH)) & (kegg$EXACT_MASS <= (mCln+THRESH)) )
-    
-    idx = c(mHp, mNH4p, mNap, mKp) #, mHn, mCln)
+    idx <- matchMZAgainstMetaboliteDB(queryMZ = metabolites[i], targetMasses=kegg$EXACT_MASS,
+                                      modMasses = modMasses, THRESH=THRESH)
     if( sum(idx)>0 ){
       idx = unique(idx)
       metabolite_matches[[i]] = cbind(kegg[idx,], "m.z"=metabolites[i])
@@ -49,13 +23,14 @@ searchKEGG <- function(x, kegg, THRESH){
   }
   close(pb)
   
+  message ("Of ", length(metabolites), " metabolites, ", length(metabolite_matches), " matches were found in DB")
   tmp = do.call(rbind,metabolite_matches)
   return(tmp)
 }
 
 
 #  Main function to handle search
-searchDB4KEGG <- function(input_file, kegg_file, flu_file, out_file, THRESH, max_weight=Inf){
+searchDB4KEGG <- function(input_file, kegg_file, flu_file, out_file, THRESH, max_weight=Inf, modMasses = modMasses.positive){
   
   # # Debugging: 
   # input_file <- to_search
@@ -74,15 +49,21 @@ searchDB4KEGG <- function(input_file, kegg_file, flu_file, out_file, THRESH, max
   }
   
   # Load significant hits from other OMICS datasets
-  flu <- read.delim(flu_file, sep='\t', stringsAsFactors=F, header=T)
-  flu <- flu[,c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   # remove unnecessary variables
-  
+  if ("data.frame" %in% class(flu_file)){
+    flu = flu_file
+  }else{
+    flu <- read.delim(flu_file, sep='\t', stringsAsFactors=F, header=T)
+    flu <- flu[,c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   # remove unnecessary variables
+  }
   # search for masses in KEGG 
-  kegg_hits = searchKEGG(dat, kegg, THRESH)
+  kegg_hits = searchKEGG(dat, kegg, THRESH, modMasses)
  
   cat(">> Matching Peaks to significant hits in other data sets...\n")
   # match up all Peak names with the hits
-  kegg_hits = merge(kegg_hits, dat[,c('Protein','m.z')], by='m.z')
+  if (is.null(kegg_hits)){
+    return (data.frame())
+  }
+  kegg_hits = merge(kegg_hits, dat, by='m.z')
   
   # get entrez id's corresponding to HMDB id's
   # kegg_hits = merge(kegg_hits, kegg.entrez[,c('hmdb', 'entrez_id')], by.x='id', by.y='hmdb')    ##### for MOUSE
@@ -92,8 +73,9 @@ searchDB4KEGG <- function(input_file, kegg_file, flu_file, out_file, THRESH, max
   
   # Remove duplicate metabolite ID's
   kegg_hits.long <- unique(kegg_hits.long[,-grep("condition_2|cell_line|strain", names(kegg_hits.long))])
-  # convert symbols to uppercase
-  kegg_hits.long$symbol = toupper(kegg_hits.long$symbol)
+  
+  # convert symbols to uppercase  -- why?  
+  #kegg_hits.long$symbol = toupper(kegg_hits.long$symbol)
   
   
   # aggregate all the gene names and experiment_id's
@@ -107,6 +89,7 @@ searchDB4KEGG <- function(input_file, kegg_file, flu_file, out_file, THRESH, max
   kegg_hits.agg <- merge(tmp, input_file, by=c('Protein','m.z'))
   
   cat(">> Writing results to file...\n")
+  write.table(unique(kegg_hits[, c("m.z", "Protein", "name","contrast", "log2FC", "adj.pvalue")]), gsub (".txt", "_KEGG_mass_matches.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   write.table(kegg_hits.agg ,gsub(".txt", "_KEGG_aggregated.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   write.table(kegg_hits.long ,gsub(".txt", "_KEGG_long.txt", out_file), quote=F, row.names=F, col.names=T, sep='\t')
   

@@ -21,9 +21,25 @@ optionList <- list(make_option(opt_str = c("-f", "--file"),
 			       type    = "character",
 			       default = "human",
 			       help    = "species",
-			       metavar = "character"))
-
+			       metavar = "character"),
+		   make_option(opt_str = c("-I", "--remove-infinites"),
+		               type    = "logical",
+		               default = FALSE,
+		               help    = "remove infinite values in log2FC column (default is to leave them in)",
+		               action="store_true",),
+		   make_option(opt_str = c("-x", "--orthogonal-data-file"),
+		               type    = "character",
+		               default = NULL,
+		               help    = "file of other OMICS results to find significantly regulated metabolite-associated-genes",
+		               metavar = "character"),
+		   make_option(opt_str = c("-m", "--mode"),
+		               type = "character",
+		               default = "positive",
+		               help ="look for matching masses as if ions have a 'positive' (default) or 'negative' charge")
+		   
+)
 optionParser <- OptionParser(option_list = optionList)
+
 option <- parse_args(optionParser)
 
 if (is.null(option$file)) {
@@ -35,4 +51,7 @@ if (is.null(option$file)) {
 midtod(resultsFile  = option$file,
        evidenceFile = option$evidence,
        outputDir    = option$"output-dir",
-       species      = option$species)
+       species      = option$species,
+       remove.infinites = option$"remove-infinites",
+       orthogonalDataFile = option$"orthogonal-data-file",
+       mode         = option$mode)

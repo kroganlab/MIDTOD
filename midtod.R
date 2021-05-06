@@ -10,21 +10,77 @@
 #' @examples
 #' midtod()
 #' @export
-midtod  <- function(resultsFile, evidenceFile, species, outputDir) {
-
-  ## load subroutines ##
-  source(file = "scripts/mapMasses.R")
-  source(file = "scripts/mz_to_kegg/searchDB4KEGG.R")
-  source(file = "scripts/mz_to_hmdb/searchDB4HMDB.R")
-  source(file = "scripts/aggregateResults.R")
 
 
-  ## search constrains ##
+
+# paths must resolve while sourcing, so convert all relative paths outside of a function:
+
+## load subroutines ##
+source(file = "scripts/mapMasses.R")
+source(file = "scripts/mz_to_kegg/searchDB4KEGG.R")
+source(file = "scripts/mz_to_hmdb/searchDB4HMDB.R")
+source(file = "scripts/aggregateResults.R")
+
+## orthogonal data files ##
+# path to the Fluomics database file containing the significant hits
+fluFile <- file.path(getwd(),"files/AllSignificantData.txt")
+# path to the KEGG database file
+keggFile <- file.path(getwd(),
+                      list.files(path       = "files",
+                                 pattern    = "KEGG_EC_uniprot_mapping",
+                                 full.names = TRUE))
+# # path to the HMDB database file
+# OLD
+hmdbFile <- file.path(getwd(), "files/HMDB_20150729.txt")
+# Updated
+# hmdb_file <- '~/Downloads/HMDB_endog_20180618.txt'
+
+# path to the file containing the mapping between HMDB and Entrez id's (MOUSE or HUMAN?)
+#     NOTE: Be sure to select the file for the correct species (mouse/human)
+
+
+hmdbEntrezFiles <- list(mouse="files/HMDB2entrez_mouse.tsv",
+                        human="files/HMDB2entrez_human.tsv")
+hmdbEntrezFiles <- lapply (hmdbEntrezFiles, FUN = function(file)file.path(getwd(),file))
+
+
+# ------- utility function and masses -------
+modMasses.positive <- c(  H   = 1.007276,
+                          NH4 = 18.033823,
+                          Na  = 22.989218,
+                          K   = 38.963158)
+
+modMasses.negative <- c(Hloss   = -1.007276,
+                        Cl      =  34.969402,
+                        H3Oloss = -19.01839)
+
+# returns indexes of targetMasses that match queryMZ after removing possible modMasses and applying THRESH 
+# used by searchDB4HMDB and searchKEGG
+matchMZAgainstMetaboliteDB <- function(queryMZ, targetMasses, modMasses, THRESH){
+  unModifiedQueries <- queryMZ-modMasses
+  targetMatchIdx <- unique(unlist(lapply(unModifiedQueries, function(mq) which (abs(targetMasses-mq) < THRESH))))
+  return (targetMatchIdx)
+}
+
+# ----- MAIN midtod -------
+
+
+midtod  <- function(resultsFile, evidenceFile, species, outputDir, 
+                    remove.infinites=FALSE, orthogonalDataFile = NULL,
+                    filterResults = TRUE,
+                    log2FC = 1,
+                    pvalue = 0.05,
+                    mode = c("positive", "negative")[1]) {
+
+
+  ## search constraints ##
+  ## these thresholds do double-duty: 1) they filter the orthogonal data 2) if filterResults == TRUE, they filter the metabolite MS data
   # any log2 fold change above this value is considered significant
   # (also applies to the negative value in the opposite way)
-  log2FC <- 1
+  #log2FC <- 1
   # any p-value below this is considered significant
-  pvalue <- 0.05
+  #pvalue <- 0.05
+  
   # this is the amount we are willing to let the masses be off for
   # identification +/-
   threshold <- 0.05
@@ -32,32 +88,21 @@ midtod  <- function(resultsFile, evidenceFile, species, outputDir) {
   # in the search
   maxWeight <- 500 
 
-  ## orthogonal data files ##
-  # path to the Fluomics database file containing the significant hits
-  fluFile <- "files/AllSignificantData.txt"
-  # path to the KEGG database file
-  keggFile <- list.files(path       = "files",
-			 pattern    = "KEGG_EC_uniprot_mapping",
-			 full.names = TRUE)
-# # path to the HMDB database file
-# OLD
-hmdbFile <- "files/HMDB_20150729.txt"
-# Updated
-# hmdb_file <- '~/Downloads/HMDB_endog_20180618.txt'
+  if (mode == "positive")
+    modMasses <- modMasses.positive
+  else if (mode == "negative")
+    modMasses <- modMasses.negative
+  else stop("Mode must be one of 'positive' or 'negative'")
+  message (sprintf("\nMode set to %s. Will consider these modifications:", mode))
+  print (modMasses)
+  message ("")
 
-# path to the file containing the mapping between HMDB and Entrez id's (MOUSE or HUMAN?)
-#     NOTE: Be sure to select the file for the correct species (mouse/human)
-
-if (species == "human") {
-  hmdbEntrezFile <- "files/HMDB2entrez_human.tsv"
-} else if (species == "mouse") {
-  hmdbEntrezFile <- "files/HMDB2entrez_mouse.tsv"
-} else {
-  stop("\n\nWRONG SPECIES: only human or mouse is supported\n")
+hmdbEntrezFile <- hmdbEntrezFiles[[species]]
+if(is.null(hmdbEntrezFile)){
+  stop("\n\nWRONG SPECIES: ", species,": only human or mouse is supported\n")
+  
 }
-
-# ------------------------------------------ END EDITABLE REGION ------------------------------------
-
+  
 #########################
 # SEARCH HMDB 
 #########################
@@ -76,6 +121,17 @@ dataDF <- read.delim(resultsFile, stringsAsFactors = FALSE)
 comparisons <- names(dataDF)[grepl("_log2FC", names(dataDF))]
 comparisons <- gsub(pattern = "_log2FC", replacement = "", comparisons)
 
+# pre-load flu data here instead of once per each search per loop. This should save a bit of time
+# Load significant hits from other OMICS datasets
+if (!is.null(orthogonalDataFile)){
+  fluFile <- orthogonalDataFile
+}
+message ("loading omics data from ", fluFile)
+flu <- read.delim(fluFile, sep='\t', stringsAsFactors=F, header=T)
+# limit by significance and remove unnecessary variables
+flu <- flu[!is.na(flu$q_value) & flu$q_value < pvalue &  # check for reasonable q_values
+             abs(flu$log2fc) > log2FC & abs(flu$log2fc) < 1e3,  # check for reasonable log2FC -- this removes outliers and infinites
+           c('experiment_id','omics_type','condition_2','cell_line','strain','entrez_id','symbol')]   
 message("---+ Ready to process all the relative quantifications:\n")
 
 for (one in comparisons){
@@ -106,26 +162,39 @@ for (one in comparisons){
   toSearch <- mapMasses(results_file  = resultsFile,
 			evidence_file = evidenceFile,
 			out_file      = outputFile)
-  # Keep only significant fold changes in the results
-  toSearch <- toSearch[(abs(toSearch[, log2FCcondition]) > log2FC) &
-			 (toSearch[, adjPvalCondition] < pvalue), ]
-
+  
+  if (filterResults){
+    # Keep only significant fold changes in the results
+    toSearch <- toSearch[(abs(toSearch[, log2FCcondition]) > log2FC) &
+                           (toSearch[, adjPvalCondition] < pvalue), ]
+  }
   # Check point for finite values
-  rowNames <- rownames(toSearch)
-  toSearch <- lapply(toSearch, FUN = function(x) {
-    if ("numeric" %in% class(x))
-      x[!is.finite(x)] <- NA
-    return(value = x)
-  })
-  toSearch <- as.data.frame(toSearch, row.names = rowNames)
+  if (remove.infinites){
+    # preserve rownames because we are about to lose them with lapply
+    rowNames <- rownames(toSearch)
+    toSearch <- lapply(toSearch,
+                       FUN = function(x) {
+                         if ("numeric" %in% class(x))
+                           x[!is.finite(x)] <- NA
+                         return(value = x)
+                       })
+    #convert back to data.frame and assign row names
+    toSearch <- as.data.frame(toSearch, row.names = rowNames)
+  }
+  # prep table for the DB search and eventual output of important columns
+  toSearch$contrast = gsub ("_log2FC", "", log2FCcondition)
+  names(toSearch)[which(names(toSearch)==log2FCcondition)] <- "log2FC"
+  names(toSearch)[which(names(toSearch)==adjPvalCondition)] <- "adj.pvalue"
+
+  #limit to only columns of interest before checking for complete cases
+  toSearch <- toSearch[, c("Protein",
+                           "m.z",
+                           "contrast",
+                           "log2FC",
+                           "adj.pvalue")]
   toSearch <- toSearch[complete.cases(toSearch), , drop = FALSE]
 
-  if (nrow(toSearch) > 1) {
-    # prep for the DB search
-    toSearch <- toSearch[, c("Protein",
-			     "m.z",
-			     log2FCcondition,
-			     adjPvalCondition)]
+  if (nrow(toSearch) > 0) {
     
     # SEARCH KEGG AGAINST OTHER DATA SETS
     # -----------------------------------
@@ -135,10 +204,11 @@ for (one in comparisons){
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     resultsKEGG <- searchDB4KEGG(input_file = toSearch,
 				 kegg_file  = keggFile,
-				 flu_file   = fluFile,
+				 flu_file   = flu,#fluFile,
 				 out_file   = outputFile,
 				 THRESH     = threshold,
-				 max_weight = maxWeight)
+				 max_weight = maxWeight,
+				 modMasses  = modMasses)
     
     # SEARCH HMDB AGAINST OTHER DATA SETS
     # -----------------------------------
@@ -150,17 +220,18 @@ for (one in comparisons){
     resultsHMDB <- searchDB4HMDB(input_file       = toSearch,
 				 hmdb_file        = hmdbFile,
 				 hmdb.entrez_file = hmdbEntrezFile,
-				 flu_file         = fluFile,
+				 flu_file         = flu,#fluFile,
 				 out_file         = outputFile,
 				 THRESH           = threshold,
-				 max_weight       = maxWeight)
+				 max_weight       = maxWeight,
+				 modMasses        = modMasses)
     
     # combine the results and aggregate the information
     resultsAggregate <- aggregateResults(results.kegg = resultsKEGG,
 					 results.hmdb = resultsHMDB,
 					 out_file     = outputFile)
     
-    message("\n",one,"is done\n\n")
+    message("\n",one," is done\n\n")
   } else{
     message("\nNOT ENOUGH SIGNIFICANT RESULTS FOR THIS COMPARISON\n\n")
   }
