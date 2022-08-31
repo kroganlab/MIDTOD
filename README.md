@@ -79,6 +79,11 @@ midtod(resultsFile  = "example/shortened.H5N1_Mouse_Lung_results-wide.txt",
 
 ```
 
+## Generating input files with artMS
+
+See artMS help for instructions on generating an evidence file (section 7.1) and a results file (section 7.3) that is suitable for input to MIDTOD:
+
+https://www.bioconductor.org/packages/devel/bioc/vignettes/artMS/inst/doc/artMS_vignette.html#7_METABOLOMICS
 
 ## Orthogonal omics data format
 
