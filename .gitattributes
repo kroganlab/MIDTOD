@@ -1,2 +1,0 @@
-files/AllSignificantData.txt filter=lfs diff=lfs merge=lfs -text
-files/KEGG_EC_uniprot_mapping_20191018.txt filter=lfs diff=lfs merge=lfs -text
