@@ -77,8 +77,4 @@ Orthogonal data set example. Formatted here for ease of reading.  Actual inputte
 38284:   RNAseq_thp1_H5N1_6     RNAseq        H5N1      thp1   H5N1    158586    ZXDB 0.0400759167 -1.048902
 ```
 
-There is also this out-dated GUI  method of starting the script, but it's not currently updated with latest options.
-```bash
-Rscript -e "shiny::runApp(launch.browser = TRUE)"
-```
 
