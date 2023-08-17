@@ -70,7 +70,8 @@ midtod  <- function(resultsFile, evidenceFile, species, outputDir,
                     filterResults = TRUE,
                     log2FC = 1,
                     pvalue = 0.05,
-                    mode = c("positive", "negative")[1]) {
+                    mode = c("positive", "negative")[1],
+                    massThreshold = 0.05) {
 
 
   ## search constraints ##
@@ -83,7 +84,7 @@ midtod  <- function(resultsFile, evidenceFile, species, outputDir,
   
   # this is the amount we are willing to let the masses be off for
   # identification +/-
-  threshold <- 0.05
+  threshold <- massThreshold
   # the maximum weight (in Dalton) of metabolites in KEGG to be included
   # in the search
   maxWeight <- 500 
